@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>National Gas — NTS Compressors</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ===================== NAV ===================== -->
+  <nav>
+    <div class="nav-brand">
+      <div class="nav-logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2C8 2 5 5 5 9c0 5 7 13 7 13s7-8 7-13c0-4-3-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/>
+        </svg>
+      </div>
+      <div>
+        <div class="nav-name">National Gas</div>
+        <div class="nav-sub">NTS Compressors</div>
+      </div>
+    </div>
+    <ul class="nav-links">
+      <li><a href="#network">The Network</a></li>
+      <li><a href="#how">How It Works</a></li>
+      <li><a href="#physics">Physics</a></li>
+      <li><a href="#turbines">Turbines</a></li>
+      <li><a href="#future">Future</a></li>
+      <li><a href="#calc">Calculator</a></li>
+    </ul>
+  </nav>
+
+  <!-- ===================== HERO ===================== -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-eyebrow">National Transmission System · Great Britain</div>
+      <h1>The <span>compressors</span> that<br>move Britain's gas</h1>
+      <p class="hero-desc">
+        National Gas operates the backbone of Britain's gas supply — nearly 5,000 miles of
+        high-pressure pipeline kept moving by jet-engine-derived turbines at 21 compressor stations.
+      </p>
+      <div class="hero-stats">
+        <div class="h-stat"><div class="h-stat-num">60+</div><div class="h-stat-label">compressor units</div></div>
+        <div class="h-stat"><div class="h-stat-num">21</div><div class="h-stat-label">compressor stations</div></div>
+        <div class="h-stat"><div class="h-stat-num">~7,660 km</div><div class="h-stat-label">NTS pipeline</div></div>
+        <div class="h-stat"><div class="h-stat-num">≤85 bar</div><div class="h-stat-label">max operating pressure</div></div>
+        <div class="h-stat"><div class="h-stat-num">25 mph</div><div class="h-stat-label">gas flow speed</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== NETWORK ===================== -->
+  <section class="section" id="network">
+    <div class="eyebrow">01 — The Network</div>
+    <h2>Britain's gas transmission backbone</h2>
+    <p>
+      National Gas Transmission owns and operates the National Transmission System — the sole
+      high-pressure gas network in Great Britain. Gas enters at coastal terminals such as St Fergus,
+      Bacton, Easington and Teesside, and is pushed across the country entirely by compression.
+    </p>
+    <p>
+      The NTS operates at up to 85 bar — roughly 1,200 times atmospheric pressure. It is the
+      <em>only</em> gas system in Great Britain that uses compression; lower-pressure regional
+      distribution networks rely on the pressure difference that compression creates at the handover point.
+    </p>
+
+    <!-- Pipeline schematic (SVG drawn inline for the map) -->
+    <div class="map-wrap" id="pipeline-map">
+      <!-- SVG injected by js/map.js -->
+    </div>
+
+    <h3 style="margin-top:2.5rem;">All 21 compressor station locations</h3>
+    <div class="station-grid" id="station-grid">
+      <!-- Populated by js/stations.js -->
+    </div>
+    <p class="small-note">
+      Highlighted stations are receiving new compressors as part of National Gas's
+      £350 million 2025 investment programme.
+    </p>
+  </section>
+
+  <!-- ===================== HOW IT WORKS ===================== -->
+  <section class="section" id="how">
+    <div class="eyebrow">02 — How It Works</div>
+    <h2>What a compressor station actually does</h2>
+    <p>
+      Gas entering the NTS at coastal terminals is at high pressure. As it travels along the pipe,
+      friction losses reduce that pressure continuously. Without intervention, the gas would slow
+      and eventually stop. Compressor stations are placed at intervals to restore the pressure.
+    </p>
+    <p>
+      Each station contains two or more compressor units — each one an industrial jet engine (gas
+      turbine) driving a centrifugal compressor. The turbine burns a small portion of the flowing
+      gas to generate the shaft power needed to drive the compressor.
+    </p>
+
+    <div class="how-grid">
+      <div class="how-card">
+        <div class="how-num">STEP 01</div>
+        <h3>Gas arrives at low pressure</h3>
+        <p>After 80–160 km of travel, pipeline gas may have lost 20–30 bar. It enters the station
+        via inlet isolation valves and a scrubber to remove any liquids or particulates.</p>
+      </div>
+      <div class="how-card">
+        <div class="how-num">STEP 02</div>
+        <h3>Gas turbine fires up</h3>
+        <p>A small proportion of the pipeline gas fuels the gas turbine driver — aeroderivative
+        turbines adapted from jet engines, capable of starting in minutes and reaching 10–20 MW.</p>
+      </div>
+      <div class="how-card">
+        <div class="how-num">STEP 03</div>
+        <h3>Centrifugal compressor raises pressure</h3>
+        <p>The turbine drives a centrifugal compressor at high speed. The impeller adds kinetic
+        energy to the gas; a diffuser converts that energy into pressure. Typical ratio: 1.2–1.5:1.</p>
+      </div>
+      <div class="how-card">
+        <div class="how-num">STEP 04</div>
+        <h3>After-cooling and reinjection</h3>
+        <p>Compression heats the gas significantly. Air-cooled heat exchangers bring it back down
+        before it re-enters the pipe — denser cool gas means more mass throughput.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PHYSICS ===================== -->
+  <section class="section" id="physics">
+    <div class="eyebrow">03 — The Physics</div>
+    <h2>Why compression heats the gas — and why that matters</h2>
+    <p>
+      When a centrifugal compressor squeezes the gas, it does work on it. By the first law of
+      thermodynamics, in an adiabatic process all that work raises the gas temperature.
+    </p>
+
+    <div class="formula-row">
+      <div class="formula-eq">T₂ / T₁ = (P₂ / P₁) ^ ((γ − 1) / γ)</div>
+      <div class="formula-note">Isentropic compression · γ ≈ 1.3 for natural gas · T in Kelvin · P in any consistent unit</div>
+    </div>
+
+    <p>
+      For a pressure ratio of 1.4:1 with gas entering at 15 °C, the outlet temperature rises
+      to approximately 52 °C — a 37 °C rise. After-coolers are essential: hot gas is less dense,
+      reducing the throughput benefit of compression.
+    </p>
+
+    <div class="formula-row">
+      <div class="formula-eq">W = Cp × T₁ × [(P₂/P₁)^((γ−1)/γ) − 1] / η</div>
+      <div class="formula-note">Shaft work per kg of gas · Cp ≈ 2,220 J/kg·K · η = isentropic efficiency (78–85%)</div>
+    </div>
+
+    <p>
+      A typical NTS compressor handling 150 kg/s at a 1.4:1 pressure ratio requires roughly
+      8–12 MW of shaft power — similar to a small offshore platform's total electrical generation.
+    </p>
+
+    <div class="formula-row">
+      <div class="formula-eq">ΔP_friction ∝ (v² × L × ρ) / D</div>
+      <div class="formula-note">Darcy–Weisbach · v = velocity · L = pipe length · ρ = gas density · D = pipe diameter</div>
+    </div>
+
+    <p>
+      This explains why compressor stations exist: velocity squared and pipe length drive losses up.
+      Building a wider pipe is often more expensive than adding a compressor station.
+    </p>
+  </section>
+
+  <!-- ===================== TURBINES ===================== -->
+  <section class="section" id="turbines">
+    <div class="eyebrow">04 — The Turbines</div>
+    <h2>Industrial jet engines driving the NTS</h2>
+    <p>
+      National Gas describes its compressor units as "jet engines" — and this is literally accurate.
+      The existing fleet includes the Rolls-Royce Industrial Avon, derived from the Avon jet engine
+      that powered aircraft like the English Electric Lightning and Hawker Hunter. These cores were
+      adapted for industrial gas compression by coupling them to a power turbine and centrifugal compressor.
+    </p>
+    <p>
+      In April 2025, National Gas announced over £350 million for new equipment at Peterborough,
+      St Fergus and Wormington, manufactured by Siemens Energy, Baker Hughes and Solar Turbines.
+    </p>
+
+    <div class="turbine-grid">
+      <div class="turbine-card">
+        <div class="turbine-badge existing">Existing fleet</div>
+        <h3>Rolls-Royce Industrial Avon</h3>
+        <p>Aeroderivative of the Avon jet engine. The Avon 200 series produces ~15–16 MW.
+        The NTS fleet has collectively logged tens of millions of operating hours on this platform.</p>
+      </div>
+      <div class="turbine-card">
+        <div class="turbine-badge new">New (2025+)</div>
+        <h3>Siemens Energy turbines</h3>
+        <p>Part of the £350m upgrade at three priority sites. Meet tighter NOₓ limits under the
+        Medium Combustion Plant Directive (MCPD) and are hydrogen-blend ready from commissioning.</p>
+      </div>
+      <div class="turbine-card">
+        <div class="turbine-badge new">New (2025+)</div>
+        <h3>Baker Hughes &amp; Solar Turbines</h3>
+        <p>Also part of the 2025 programme. Modern aeroderivative and industrial compressor trains,
+        hydrogen-blend capable, supporting ~1,000 jobs across Great Britain.</p>
+      </div>
+    </div>
+
+    <p style="margin-top:1.5rem;">
+      The MCPD requires that any impacted asset must be made compliant, removed from service, or
+      limited to 500 hours per year by 1 January 2030. Wormington is one of five priority MCPD
+      sites agreed with Ofgem for near-term investment.
+    </p>
+  </section>
+
+  <!-- ===================== FUTURE ===================== -->
+  <section class="section" id="future">
+    <div class="eyebrow">05 — The Future</div>
+    <h2>From natural gas to hydrogen</h2>
+    <p>
+      National Gas has begun the FutureGrid Compression project — testing whether the NTS
+      compression system can be repurposed to carry hydrogen rather than (or blended with)
+      natural gas. Hydrogen is the leading candidate for decarbonising industrial heat that
+      cannot easily be electrified.
+    </p>
+
+    <div class="future-banner">
+      <h3>FutureGrid Compression programme</h3>
+      <p>
+        A test compressor system has been relocated to the Spadeadam facility with a 1 km pipe
+        loop, for trials with hydrogen blends up to 20%. The gas turbine driver is being tested
+        separately at the Siemens Energy/RWG facility in Ansty. New compressors installed in 2025
+        are already specified to compress hydrogen blends from day one.
+      </p>
+      <div class="progress-bar-wrap">
+        <div class="progress-label"><span>H₂ blend testing (up to 20%)</span><span>In progress</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:60%;background:#3b82f6;"></div></div>
+      </div>
+      <div class="progress-bar-wrap" style="margin-top:1rem;">
+        <div class="progress-label"><span>100% hydrogen capability (new compressors)</span><span>By 2030</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:25%;background:#10b981;"></div></div>
+      </div>
+      <div class="progress-bar-wrap" style="margin-top:1rem;">
+        <div class="progress-label"><span>MCPD compliance for existing fleet</span><span>By Jan 2030</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:40%;background:#f59e0b;"></div></div>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-year">2021</div>
+        <h3>Hydrogen turbine fuel project begins</h3>
+        <p>National Gas starts investigating whether existing gas turbines can run on hydrogen
+        blends and 100% hydrogen, covering safety, technical, and economic factors.</p>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">2023</div>
+        <h3>HyNTS Compression feasibility complete</h3>
+        <p>Existing centrifugal compressors can run on hydrogen blends up to 20% with minimal
+        modification; 100% hydrogen requires strategic changes to the compressor and gearbox.</p>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">April 2025</div>
+        <h3>£350 million compressor investment announced</h3>
+        <p>National Gas announces new compressors at Peterborough, St Fergus and Wormington —
+        manufactured by Siemens Energy, Baker Hughes and Solar Turbines, all hydrogen-blend ready.</p>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">By 2030</div>
+        <h3>MCPD compliance deadline</h3>
+        <p>All compressor units must meet NOₓ limits under the Medium Combustion Plant Directive,
+        be decommissioned, or be capped at 500 hours per year.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CALCULATOR ===================== -->
+  <section class="section" id="calc">
+    <div class="eyebrow">06 — Interactive</div>
+    <h2>NTS compressor physics calculator</h2>
+    <p>
+      Use real isentropic thermodynamics to explore what happens inside a single NTS compressor
+      unit. γ = 1.3 and Cp = 2,220 J/kg·K are representative values for natural gas on the NTS.
+    </p>
+
+    <div class="calc-panel">
+      <div class="calc-grid">
+        <div class="cg">
+          <label for="p1">Inlet pressure (bar)</label>
+          <input type="range" min="30" max="85" value="50" id="p1">
+          <div class="val" id="p1v">50 bar</div>
+        </div>
+        <div class="cg">
+          <label for="t1">Inlet temperature (°C)</label>
+          <input type="range" min="5" max="40" value="15" id="t1">
+          <div class="val" id="t1v">15 °C</div>
+        </div>
+        <div class="cg">
+          <label for="cr">Compression ratio</label>
+          <input type="range" min="1.1" max="2.0" step="0.05" value="1.4" id="cr">
+          <div class="val" id="crv">1.40 : 1</div>
+        </div>
+        <div class="cg">
+          <label for="mf">Mass flow (kg/s)</label>
+          <input type="range" min="20" max="300" value="150" id="mf">
+          <div class="val" id="mfv">150 kg/s</div>
+        </div>
+      </div>
+      <div class="res-grid" id="results"></div>
+    </div>
+  </section>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer>
+    <p>Based on publicly available data from <strong>National Gas Transmission plc</strong> and published engineering literature.</p>
+    <p>Sources: nationalgas.com · Ofgem RIIO-GT3 · FutureGrid Compression Progress Report 2024 · Rolls-Royce Avon industrial specifications</p>
+  </footer>
+
+  <!-- Scripts at the bottom so HTML loads first -->
+  <script src="js/map.js"></script>
+  <script src="js/stations.js"></script>
+  <script src="js/calculator.js"></script>
+
+</body>
+</html>

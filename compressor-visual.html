@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NTS Compressor Station — Interactive Visual</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:    #0d1117;
+  --bg2:   #161b22;
+  --bg3:   #21262d;
+  --ink:   #e6edf3;
+  --ink2:  #8b949e;
+  --ink3:  #484f58;
+  --red:   #c0392b;
+  --red2:  #ff6b6b;
+  --blue:  #58a6ff;
+  --green: #3fb950;
+  --amber: #d29922;
+  --border:#30363d;
+  --sans:  'DM Sans', sans-serif;
+  --mono:  'DM Mono', monospace;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── HEADER ── */
+header {
+  border-bottom: 1px solid var(--border);
+  padding: 1rem 2rem;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.header-title { font-size: 15px; font-weight: 600; }
+.header-sub   { font-size: 12px; color: var(--ink2); font-family: var(--mono); }
+.mode-tabs { display: flex; gap: 6px; }
+.mode-tab {
+  padding: 5px 14px; border-radius: 6px; font-size: 12px;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--ink2); cursor: pointer; font-family: var(--sans);
+  transition: all 0.15s;
+}
+.mode-tab.active { background: var(--red); color: white; border-color: var(--red); }
+
+/* ── MAIN LAYOUT ── */
+main {
+  flex: 1; display: grid;
+  grid-template-columns: 1fr 300px;
+  overflow: hidden;
+}
+@media (max-width: 900px) {
+  main { grid-template-columns: 1fr; }
+  .side-panel { border-top: 1px solid var(--border); border-left: none; max-height: 300px; overflow-y: auto; }
+}
+
+/* ── CANVAS AREA ── */
+.canvas-wrap {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+}
+canvas {
+  display: block;
+  width: 100%; height: 100%;
+  cursor: crosshair;
+}
+
+/* ── SIDE PANEL ── */
+.side-panel {
+  border-left: 1px solid var(--border);
+  overflow-y: auto;
+  background: var(--bg2);
+}
+.panel-section { padding: 1.25rem; border-bottom: 1px solid var(--border); }
+.panel-label {
+  font-size: 10px; font-family: var(--mono); text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--ink3); margin-bottom: 0.75rem;
+}
+.panel-title { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 0.4rem; }
+.panel-body  { font-size: 12px; color: var(--ink2); line-height: 1.6; }
+
+/* Live readouts */
+.readout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.readout {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 6px; padding: 8px 10px;
+}
+.readout .rl { font-size: 10px; color: var(--ink3); font-family: var(--mono); }
+.readout .rv { font-size: 1rem; font-family: var(--mono); color: var(--blue); margin-top: 2px; }
+
+/* Component legend */
+.legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 12px; color: var(--ink2); }
+.legend-swatch { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+
+/* Controls */
+.control-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.control-row label { font-size: 12px; color: var(--ink2); }
+.control-row input[type=range] { width: 120px; accent-color: var(--red); }
+.control-val { font-family: var(--mono); font-size: 12px; color: var(--red); min-width: 50px; text-align: right; }
+
+/* Hover tooltip */
+#tooltip {
+  position: absolute; pointer-events: none;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 14px;
+  font-size: 12px; max-width: 220px;
+  opacity: 0; transition: opacity 0.15s;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
+#tooltip .tt-title { font-weight: 600; color: var(--ink); margin-bottom: 4px; font-size: 13px; }
+#tooltip .tt-body  { color: var(--ink2); line-height: 1.5; }
+
+/* Anim controls */
+.anim-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0.75rem 1.25rem; border-top: 1px solid var(--border);
+  background: var(--bg2); flex-shrink: 0;
+}
+.anim-btn {
+  padding: 5px 14px; border-radius: 6px; font-size: 12px;
+  border: 1px solid var(--border); background: var(--bg3);
+  color: var(--ink); cursor: pointer; font-family: var(--sans);
+}
+.anim-btn:hover { border-color: var(--red); color: var(--red); }
+.anim-label { font-size: 12px; color: var(--ink3); font-family: var(--mono); }
+#speed-slider { accent-color: var(--red); }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="header-title">NTS Compressor Station — Interactive Visual</div>
+    <div class="header-sub">Click any component for detail · Hover to inspect</div>
+  </div>
+  <div class="mode-tabs">
+    <button class="mode-tab active" onclick="setMode('station')">Station View</button>
+    <button class="mode-tab" onclick="setMode('pv')">P–V Diagram</button>
+    <button class="mode-tab" onclick="setMode('pressure')">Pressure Profile</button>
+  </div>
+</header>
+
+<main>
+  <div class="canvas-wrap">
+    <canvas id="main-canvas"></canvas>
+    <div id="tooltip">
+      <div class="tt-title" id="tt-title"></div>
+      <div class="tt-body"  id="tt-body"></div>
+    </div>
+  </div>
+
+  <div class="side-panel">
+
+    <!-- Selected component info -->
+    <div class="panel-section">
+      <div class="panel-label">Selected Component</div>
+      <div class="panel-title" id="sel-title">Click a component</div>
+      <div class="panel-body"  id="sel-body">Hover over any part of the compressor station diagram to see its name, then click for a full engineering explanation.</div>
+    </div>
+
+    <!-- Live readouts -->
+    <div class="panel-section">
+      <div class="panel-label">Live Process Values</div>
+      <div class="readout-grid">
+        <div class="readout"><div class="rl">Inlet P</div><div class="rv" id="ro-p1">50 bar</div></div>
+        <div class="readout"><div class="rl">Outlet P</div><div class="rv" id="ro-p2">70 bar</div></div>
+        <div class="readout"><div class="rl">Inlet T</div><div class="rv" id="ro-t1">15 °C</div></div>
+        <div class="readout"><div class="rl">Outlet T</div><div class="rv" id="ro-t2">52 °C</div></div>
+        <div class="readout"><div class="rl">CR</div><div class="rv" id="ro-cr">1.40</div></div>
+        <div class="readout"><div class="rl">Power</div><div class="rv" id="ro-pw">10.2 MW</div></div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="panel-section">
+      <div class="panel-label">Operating Parameters</div>
+      <div class="control-row">
+        <label>Inlet pressure</label>
+        <input type="range" id="ctrl-p1" min="30" max="80" value="50" oninput="updateControls()">
+        <span class="control-val" id="cv-p1">50 bar</span>
+      </div>
+      <div class="control-row">
+        <label>Comp. ratio</label>
+        <input type="range" id="ctrl-cr" min="1.1" max="2.0" step="0.05" value="1.4" oninput="updateControls()">
+        <span class="control-val" id="cv-cr">1.40</span>
+      </div>
+      <div class="control-row">
+        <label>Inlet temp</label>
+        <input type="range" id="ctrl-t1" min="5" max="40" value="15" oninput="updateControls()">
+        <span class="control-val" id="cv-t1">15 °C</span>
+      </div>
+      <div class="control-row">
+        <label>Mass flow</label>
+        <input type="range" id="ctrl-mf" min="20" max="300" value="150" oninput="updateControls()">
+        <span class="control-val" id="cv-mf">150 kg/s</span>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="panel-section">
+      <div class="panel-label">Component Legend</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#1d4e89"></div>Inlet / scrubber section</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#7c3aed"></div>Gas turbine driver</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#c0392b"></div>Centrifugal compressor</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#0e7490"></div>After-cooler</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#166534"></div>Outlet / metering</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#92400e"></div>Fuel gas system</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#374151"></div>Anti-surge recycle</div>
+    </div>
+
+  </div>
+</main>
+
+<div class="anim-bar">
+  <button class="anim-btn" id="play-btn" onclick="togglePlay()">⏸ Pause</button>
+  <span class="anim-label">Animation speed:</span>
+  <input type="range" id="speed-slider" min="0.2" max="3" step="0.1" value="1">
+  <span class="anim-label" id="speed-label">1.0×</span>
+  <span class="anim-label" style="margin-left:auto;">NTS Compressor Station · National Gas Transmission</span>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+//  CONSTANTS & STATE
+// ═══════════════════════════════════════════════════════════════════
+const GAMMA = 1.3, CP = 2220, ETA = 0.82;
+let state = { p1: 50, cr: 1.4, t1: 15, mf: 150 };
+let mode = 'station';
+let playing = true;
+let animFrame = 0;
+let speedMult = 1;
+let selectedComp = null;
+
+const canvas = document.getElementById('main-canvas');
+const ctx = canvas.getContext('2d');
+
+// ═══════════════════════════════════════════════════════════════════
+//  THERMODYNAMICS
+// ═══════════════════════════════════════════════════════════════════
+function calcThermo(s) {
+  const t1K = s.t1 + 273.15;
+  const t2K = t1K * Math.pow(s.cr, (GAMMA-1)/GAMMA);
+  const t2C = t2K - 273.15;
+  const p2  = s.p1 * s.cr;
+  const w   = CP * (t2K - t1K);
+  const pMW = w * s.mf / 1e6 / ETA;
+  return { t2C, p2, pMW, deltaT: t2C - s.t1 };
+}
+
+function updateReadouts() {
+  const th = calcThermo(state);
+  document.getElementById('ro-p1').textContent = state.p1 + ' bar';
+  document.getElementById('ro-p2').textContent = th.p2.toFixed(1) + ' bar';
+  document.getElementById('ro-t1').textContent = state.t1 + ' °C';
+  document.getElementById('ro-t2').textContent = th.t2C.toFixed(1) + ' °C';
+  document.getElementById('ro-cr').textContent = state.cr.toFixed(2);
+  document.getElementById('ro-pw').textContent = th.pMW.toFixed(1) + ' MW';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  COMPONENT DEFINITIONS  (station mode)
+// ═══════════════════════════════════════════════════════════════════
+function getComponents(W, H) {
+  // Layout is proportional to canvas size
+  const m = Math.min(W, H);
+  const cx = W / 2, cy = H / 2;
+
+  // Pipe y-centre
+  const pipeY = cy + H * 0.02;
+  const pipeH = H * 0.07;
+
+  return [
+    {
+      id: 'inlet-valve',
+      label: 'Inlet Isolation Valve',
+      color: '#1d4e89',
+      x: W*0.04, y: pipeY - pipeH*1.5,
+      w: W*0.06, h: pipeH*4,
+      rx: 4,
+      short: 'Inlet isolation valve allows the unit to be shut in for maintenance without stopping the pipeline.',
+      detail: 'A full-bore ball valve (or gate valve on older stations) that isolates this compressor unit from the live pipeline. Actuated pneumatically, it can shut in seconds in an emergency. Bypass valves allow gas to flow past the unit when it is offline.'
+    },
+    {
+      id: 'scrubber',
+      label: 'Inlet Scrubber',
+      color: '#1d4e89',
+      x: W*0.12, y: pipeY - H*0.18,
+      w: W*0.07, h: H*0.36,
+      rx: W*0.035,
+      short: 'Separates any liquid droplets and solids from the gas before it enters the compressor.',
+      detail: 'Gas entering the NTS from terminals or storage can carry hydrocarbon liquids, water droplets, and particulates. The inlet scrubber (a vertical pressure vessel) uses gravity and mesh pads to knock these out. Liquid carryover into a centrifugal compressor causes severe blade erosion ("liquid slugging") and can wreck an impeller in seconds.'
+    },
+    {
+      id: 'fuel-system',
+      label: 'Fuel Gas System',
+      color: '#92400e',
+      x: W*0.24, y: pipeY - H*0.30,
+      w: W*0.08, h: H*0.16,
+      rx: 6,
+      short: 'Taps off a small portion of pipeline gas to fuel the gas turbine driver.',
+      detail: 'The gas turbine burns pipeline gas as fuel — typically 2–4% of the throughput at full load. The fuel gas skid conditions this gas: it reduces the pressure from pipeline pressure to turbine fuel pressure (~35 bar), filters it, and heats it to prevent hydrocarbon condensation in the fuel nozzles. Gas composition monitoring here is critical — a rich gas slug can overspeed the turbine.'
+    },
+    {
+      id: 'turbine',
+      label: 'Gas Turbine Driver',
+      color: '#7c3aed',
+      x: W*0.24, y: pipeY - pipeH*1.8,
+      w: W*0.18, h: pipeH*5,
+      rx: 8,
+      short: 'An aeroderivative jet engine (e.g. Rolls-Royce Industrial Avon) providing 10–20 MW of shaft power.',
+      detail: 'On the NTS, gas turbines are typically aeroderivative units — jet engine cores re-engineered for industrial use. The Rolls-Royce Avon 200-series (derived from the fighter jet engine) has been the NTS workhorse for decades. Air enters a compressor section, fuel is burned in a combustion chamber, and hot gases expand through a turbine. A separate power turbine converts residual energy into shaft rotation at ~3,000–6,000 rpm to drive the compressor.'
+    },
+    {
+      id: 'gearbox',
+      label: 'Gearbox / Coupling',
+      color: '#374151',
+      x: W*0.43, y: pipeY - pipeH*1.2,
+      w: W*0.04, h: pipeH*3.4,
+      rx: 4,
+      short: 'Matches the turbine output speed to the centrifugal compressor inlet speed.',
+      detail: 'The gas turbine power turbine typically runs at 6,000–8,000 rpm; the centrifugal compressor impeller runs at 8,000–15,000 rpm. A gearbox (or in modern designs, a variable-speed drive) matches these speeds. The coupling must absorb torque shocks during starts and trips without transmitting damaging loads into the compressor shaft.'
+    },
+    {
+      id: 'compressor',
+      label: 'Centrifugal Compressor',
+      color: '#c0392b',
+      x: W*0.48, y: pipeY - H*0.20,
+      w: W*0.12, h: H*0.40,
+      rx: W*0.06,
+      short: 'The core machine — an impeller spinning at high speed raises gas pressure by converting kinetic energy.',
+      detail: 'Gas enters axially through the eye of the impeller. Centrifugal force throws it outward at high velocity. A diffuser (a ring of curved vanes) slows the gas, converting velocity into pressure. A single-stage centrifugal compressor achieves a pressure ratio of 1.2–1.5:1. The NTS mainly uses single-stage units because the required pressure ratio across a station is modest (~1.3–1.5:1), but the flow volumes are enormous (up to 300 kg/s).'
+    },
+    {
+      id: 'antisurge',
+      label: 'Anti-Surge Recycle Valve',
+      color: '#374151',
+      x: W*0.48, y: pipeY - H*0.38,
+      w: W*0.12, h: H*0.12,
+      rx: 6,
+      short: 'Opens to recycle compressed gas back to the inlet if the compressor approaches surge.',
+      detail: 'Surge occurs when flow through a centrifugal compressor drops below a critical minimum — the pressure ratio across the machine is too high for the available flow, and the gas reverses direction violently. This is highly destructive. An anti-surge controller monitors the compressor\'s operating point continuously against its surge line. If the machine approaches the line, a recycle valve opens and passes compressed gas back to the inlet, maintaining minimum safe flow. Modern anti-surge systems respond in under 100 milliseconds.'
+    },
+    {
+      id: 'aftercooler',
+      label: 'After-Cooler',
+      color: '#0e7490',
+      x: W*0.63, y: pipeY - H*0.18,
+      w: W*0.11, h: H*0.36,
+      rx: 6,
+      short: 'Removes the heat of compression before the gas re-enters the pipeline.',
+      detail: 'Isentropic compression of natural gas at a 1.4:1 pressure ratio raises the temperature by ~37 °C. Hot gas is less dense, which reduces the mass flow you can push through the pipeline for the same volumetric flow. After-coolers (air-cooled heat exchangers — large banks of finned tubes) bring the gas back down to within 5–10 °C of ambient temperature. On the NTS, large electrically-driven fans force air across the tube banks. Cooler sizing must account for the hottest summer day — typically 35 °C in southern England.'
+    },
+    {
+      id: 'outlet-valve',
+      label: 'Outlet Metering & Valve',
+      color: '#166534',
+      x: W*0.77, y: pipeY - pipeH*1.5,
+      w: W*0.06, h: pipeH*4,
+      rx: 4,
+      short: 'Measures flow leaving the station and provides final isolation.',
+      detail: 'An ultrasonic flow meter (multiple paths across the pipe bore) measures the gas volume and mass leaving the compressor station to ±0.5% accuracy. This metering point feeds the National Control Centre\'s real-time flow model. The outlet isolation valve completes the station boundary — together with the inlet valve, it allows complete unit isolation. Check valves prevent reverse flow from the downstream high-pressure pipe back through a shutdown unit.'
+    },
+  ];
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  DRAW: STATION VIEW
+// ═══════════════════════════════════════════════════════════════════
+function drawStation() {
+  const W = canvas.width, H = canvas.height;
+  const pipeY = H/2 + H*0.02, pipeH = H*0.07;
+  const t = animFrame;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Background grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.025)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+  // Main pipeline pipe body
+  const pipeGrad = ctx.createLinearGradient(0, pipeY - pipeH/2, 0, pipeY + pipeH/2);
+  pipeGrad.addColorStop(0,   '#2d3748');
+  pipeGrad.addColorStop(0.3, '#4a5568');
+  pipeGrad.addColorStop(0.7, '#2d3748');
+  pipeGrad.addColorStop(1,   '#1a202c');
+  ctx.fillStyle = pipeGrad;
+  ctx.beginPath();
+  ctx.roundRect(W*0.04, pipeY - pipeH/2, W*0.92, pipeH, pipeH/2);
+  ctx.fill();
+  ctx.strokeStyle = '#4a5568'; ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Animated gas flow particles in pipe
+  const th = calcThermo(state);
+  const particleCount = 18;
+  const pipeInnerY = pipeY;
+  for (let i = 0; i < particleCount; i++) {
+    const phase  = (i / particleCount);
+    const xFrac  = ((phase + t * 0.004 * speedMult) % 1);
+    const px     = W*0.05 + xFrac * W*0.90;
+    const py     = pipeInnerY + (Math.sin(phase * Math.PI * 4 + t*0.05) * pipeH * 0.15);
+    // Colour shifts from blue (cold) to red (hot) after compressor
+    const hot    = px > W * 0.50 && px < W * 0.63;
+    const cooled = px > W * 0.74;
+    let col = hot ? `rgba(255,100,50,${0.5 + Math.sin(t*0.1+i)*0.2})` :
+              cooled ? `rgba(80,180,255,${0.4+Math.sin(t*0.1+i)*0.15})` :
+                       `rgba(100,160,255,${0.4+Math.sin(t*0.1+i)*0.15})`;
+    ctx.beginPath();
+    ctx.arc(px, py, 2.5, 0, Math.PI*2);
+    ctx.fillStyle = col;
+    ctx.fill();
+  }
+
+  // Pipe labels
+  ctx.font = `bold ${Math.max(10, W*0.012)}px DM Mono, monospace`;
+  ctx.fillStyle = '#58a6ff'; ctx.textAlign = 'left';
+  ctx.fillText(`P₁ = ${state.p1} bar`, W*0.05, pipeY - pipeH/2 - 8);
+  ctx.fillStyle = '#3fb950'; ctx.textAlign = 'right';
+  ctx.fillText(`P₂ = ${th.p2.toFixed(1)} bar`, W*0.95, pipeY - pipeH/2 - 8);
+
+  // Temp label mid-pipe (after compressor, before cooler)
+  ctx.fillStyle = '#ff6b6b'; ctx.textAlign = 'center';
+  ctx.fillText(`T = ${th.t2C.toFixed(0)} °C`, W*0.575, pipeY - pipeH/2 - 8);
+
+  // Fuel gas line (dashed arc from fuel system down to turbine)
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = '#d29922'; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(W*0.28, pipeY - H*0.22);
+  ctx.lineTo(W*0.28, pipeY - H*0.12);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Turbine exhaust arrow (up)
+  drawArrow(ctx, W*0.33, pipeY - pipeH*1.8, W*0.33, pipeY - H*0.38, '#7c3aed', 1.5);
+
+  // Anti-surge recycle arc (dashed)
+  ctx.setLineDash([5, 5]);
+  ctx.strokeStyle = '#6b7280'; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(W*0.60, pipeY - H*0.32);
+  ctx.quadraticCurveTo(W*0.54, pipeY - H*0.48, W*0.48, pipeY - H*0.32);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#6b7280'; ctx.font = `${Math.max(9,W*0.01)}px DM Sans, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('Anti-surge recycle', W*0.54, pipeY - H*0.50);
+
+  // Draw components
+  const comps = getComponents(W, H);
+  comps.forEach(c => {
+    const isHovered  = hoveredComp && hoveredComp.id === c.id;
+    const isSelected = selectedComp && selectedComp.id === c.id;
+
+    // Glow for selected/hovered
+    if (isSelected || isHovered) {
+      ctx.shadowColor = c.color;
+      ctx.shadowBlur  = isSelected ? 20 : 10;
+    }
+
+    // Gradient fill
+    const grad = ctx.createLinearGradient(c.x, c.y, c.x + c.w, c.y + c.h);
+    grad.addColorStop(0, c.color + 'cc');
+    grad.addColorStop(1, c.color + '66');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.roundRect(c.x, c.y, c.w, c.h, c.rx || 6);
+    ctx.fill();
+
+    // Border
+    ctx.strokeStyle = isSelected ? '#ffffff' : isHovered ? c.color : c.color + '80';
+    ctx.lineWidth = isSelected ? 2 : 1.5;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Animated pulse ring on compressor
+    if (c.id === 'compressor') {
+      const pulse = (Math.sin(t * 0.05 * speedMult) + 1) / 2;
+      ctx.strokeStyle = `rgba(192,57,43,${pulse * 0.6})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(c.x - 4, c.y - 4, c.w + 8, c.h + 8, (c.rx || 6) + 4);
+      ctx.stroke();
+
+      // Spinning impeller lines
+      const cx2 = c.x + c.w/2, cy2 = c.y + c.h/2;
+      const r2   = Math.min(c.w, c.h) * 0.3;
+      for (let i = 0; i < 6; i++) {
+        const angle = (t * 0.08 * speedMult) + i * Math.PI / 3;
+        ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(cx2, cy2);
+        ctx.lineTo(cx2 + Math.cos(angle) * r2, cy2 + Math.sin(angle) * r2);
+        ctx.stroke();
+      }
+    }
+
+    // Turbine fan blades
+    if (c.id === 'turbine') {
+      const cx2 = c.x + c.w/2, cy2 = c.y + c.h/2;
+      const r2   = Math.min(c.w, c.h) * 0.28;
+      for (let i = 0; i < 8; i++) {
+        const angle = (t * 0.06 * speedMult) + i * Math.PI / 4;
+        ctx.strokeStyle = 'rgba(200,180,255,0.6)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx2 + Math.cos(angle)*r2*0.3, cy2 + Math.sin(angle)*r2*0.3);
+        ctx.lineTo(cx2 + Math.cos(angle)*r2, cy2 + Math.sin(angle)*r2);
+        ctx.stroke();
+      }
+    }
+
+    // After-cooler animated fins
+    if (c.id === 'aftercooler') {
+      const finCount = 6;
+      for (let i = 0; i < finCount; i++) {
+        const fy = c.y + c.h * (i+1) / (finCount+1);
+        const pulse = 0.3 + 0.2 * Math.sin(t*0.05*speedMult + i*0.8);
+        ctx.strokeStyle = `rgba(80,210,230,${pulse})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(c.x + 4, fy);
+        ctx.lineTo(c.x + c.w - 4, fy);
+        ctx.stroke();
+      }
+    }
+
+    // Component label
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.font = `bold ${Math.max(9, W*0.011)}px DM Sans, sans-serif`;
+    ctx.textAlign = 'center';
+    const lines = c.label.split(' / ').flatMap(s => wrapText(s, c.w * 0.9, ctx));
+    lines.forEach((line, li) => {
+      ctx.fillText(line, c.x + c.w/2, c.y + c.h/2 + (li - (lines.length-1)/2) * (W*0.014));
+    });
+  });
+
+  // Flow direction arrow over pipe
+  const arrowX = W * 0.88;
+  drawArrow(ctx, arrowX, pipeY, arrowX + W*0.04, pipeY, '#58a6ff', 2);
+  ctx.fillStyle = '#58a6ff'; ctx.font = `${Math.max(9,W*0.01)}px DM Mono,monospace`;
+  ctx.textAlign = 'center';
+  ctx.fillText('FLOW →', arrowX + W*0.02, pipeY - pipeH/2 - 8);
+
+  // Power shaft line (turbine → gearbox → compressor)
+  ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2;
+  ctx.setLineDash([6,3]);
+  ctx.beginPath();
+  ctx.moveTo(W*0.42, H/2 + H*0.02);
+  ctx.lineTo(W*0.48, H/2 + H*0.02);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#fbbf24'; ctx.font = `${Math.max(9,W*0.01)}px DM Mono,monospace`;
+  ctx.textAlign = 'center';
+  ctx.fillText(`${calcThermo(state).pMW.toFixed(1)} MW`, W*0.45, H/2 - H*0.12);
+
+  // Title overlay
+  ctx.fillStyle = 'rgba(255,255,255,0.06)';
+  ctx.font = `bold ${Math.max(14, W*0.022)}px DM Sans,sans-serif`;
+  ctx.textAlign = 'left';
+  ctx.fillText('NTS COMPRESSOR STATION — SINGLE UNIT SCHEMATIC', W*0.03, H*0.07);
+  ctx.font = `${Math.max(10, W*0.013)}px DM Mono,monospace`;
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.fillText('National Gas Transmission · Aeroderivative gas turbine + centrifugal compressor', W*0.03, H*0.11);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  DRAW: P–V DIAGRAM
+// ═══════════════════════════════════════════════════════════════════
+function drawPV() {
+  const W = canvas.width, H = canvas.height;
+  const pad = { l: W*0.12, r: W*0.06, t: H*0.12, b: H*0.12 };
+  const gW = W - pad.l - pad.r, gH = H - pad.t - pad.b;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1;
+  for (let i=0;i<=10;i++) {
+    const x = pad.l + i/10*gW;
+    ctx.beginPath(); ctx.moveTo(x, pad.t); ctx.lineTo(x, pad.t+gH); ctx.stroke();
+  }
+  for (let i=0;i<=8;i++) {
+    const y = pad.t + i/8*gH;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l+gW, y); ctx.stroke();
+  }
+
+  // Axes
+  ctx.strokeStyle = '#4a5568'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, pad.t+gH); ctx.lineTo(pad.l+gW, pad.t+gH); ctx.stroke();
+
+  // Axis labels
+  ctx.fillStyle = '#8b949e'; ctx.font = `${W*0.014}px DM Mono,monospace`; ctx.textAlign='center';
+  ctx.fillText('Volume (V)', pad.l + gW/2, H - H*0.03);
+  ctx.save(); ctx.translate(W*0.03, pad.t + gH/2); ctx.rotate(-Math.PI/2);
+  ctx.fillText('Pressure (P)', 0, 0); ctx.restore();
+
+  const th = calcThermo(state);
+  // Coordinates in graph space: V1=high, V2=low; P1=low, P2=high
+  const V1x = pad.l + gW*0.75, P1y = pad.t + gH*0.75;
+  const V2x = pad.l + gW*0.25, P2y = pad.t + gH*0.15;
+
+  // Isothermal reference curve (PV=const)
+  ctx.strokeStyle = 'rgba(100,160,255,0.25)'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+  ctx.beginPath();
+  for (let i=0;i<=100;i++) {
+    const vf = 0.05 + 0.90*(i/100);
+    const x  = pad.l + vf*gW;
+    // P ∝ 1/V, scaled so isothermal passes through (V1,P1)
+    const Piso = (0.75 * 0.25) / vf;
+    const y    = pad.t + gH * (1 - Piso/1);
+    if (i===0) ctx.moveTo(x, y); else ctx.lineTo(x,y);
+  }
+  ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(100,160,255,0.4)'; ctx.font = `${W*0.012}px DM Sans,sans-serif`; ctx.textAlign='left';
+  ctx.fillText('Isothermal (ideal minimum)', pad.l + gW*0.45, pad.t + gH*0.25);
+
+  // Isentropic compression curve PV^γ = const
+  ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for (let i=0;i<=100;i++) {
+    const frac = 1 - i/100;
+    // V goes from V1 to V2 as frac goes 1→0
+    const vf = 0.25 + frac*0.50;
+    const x  = pad.l + vf*gW;
+    // P ∝ V^(-γ), scaled to start at P1
+    const Pis = 0.25 * Math.pow(0.75/vf, GAMMA);
+    const y   = pad.t + gH * (1 - Pis);
+    if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+
+  // State points
+  // Point 1 (inlet)
+  ctx.fillStyle = '#58a6ff';
+  ctx.beginPath(); ctx.arc(V1x, P1y, 7, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#58a6ff'; ctx.font = `bold ${W*0.014}px DM Sans,sans-serif`; ctx.textAlign='right';
+  ctx.fillText(`State 1`, V1x - 12, P1y - 12);
+  ctx.font = `${W*0.012}px DM Mono,monospace`;
+  ctx.fillText(`P₁ = ${state.p1} bar`, V1x - 12, P1y + 6);
+  ctx.fillText(`T₁ = ${state.t1} °C`, V1x - 12, P1y + 22);
+
+  // Point 2 (outlet)
+  ctx.fillStyle = '#ff6b6b';
+  ctx.beginPath(); ctx.arc(V2x, P2y, 7, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#ff6b6b'; ctx.font = `bold ${W*0.014}px DM Sans,sans-serif`; ctx.textAlign='left';
+  ctx.fillText(`State 2`, V2x + 12, P2y - 12);
+  ctx.font = `${W*0.012}px DM Mono,monospace`;
+  ctx.fillText(`P₂ = ${th.p2.toFixed(1)} bar`, V2x + 12, P2y + 6);
+  ctx.fillText(`T₂ = ${th.t2C.toFixed(1)} °C`, V2x + 12, P2y + 22);
+
+  // Work area shading
+  ctx.fillStyle = 'rgba(192,57,43,0.08)';
+  ctx.beginPath();
+  ctx.moveTo(V1x, P1y);
+  for (let i=0;i<=100;i++) {
+    const frac = i/100;
+    const vf = 0.75 - frac*0.50;
+    const x  = pad.l + vf*gW;
+    const Pis = 0.25 * Math.pow(0.75/vf, GAMMA);
+    const y   = pad.t + gH * (1 - Pis);
+    ctx.lineTo(x, y);
+  }
+  ctx.lineTo(V2x, pad.t+gH); ctx.lineTo(V1x, pad.t+gH); ctx.closePath(); ctx.fill();
+
+  // Labels
+  ctx.fillStyle = 'rgba(192,57,43,0.7)'; ctx.font = `${W*0.013}px DM Sans,sans-serif`; ctx.textAlign='center';
+  ctx.fillText('Isentropic compression (γ=1.3)', (V1x+V2x)/2, (P1y+P2y)/2 + gH*0.08);
+  ctx.fillStyle = 'rgba(192,57,43,0.4)'; ctx.font = `${W*0.012}px DM Sans,sans-serif`;
+  ctx.fillText('W = shaded area', (V1x+V2x)/2, pad.t+gH*0.85);
+
+  // Title
+  ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.font = `bold ${W*0.018}px DM Sans,sans-serif`; ctx.textAlign='center';
+  ctx.fillText('Pressure–Volume (P–V) Diagram — Isentropic Compression', W/2, pad.t*0.55);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  DRAW: PRESSURE PROFILE
+// ═══════════════════════════════════════════════════════════════════
+function drawPressureProfile() {
+  const W = canvas.width, H = canvas.height;
+  const pad = { l: W*0.10, r: W*0.05, t: H*0.15, b: H*0.15 };
+  const gW = W - pad.l - pad.r, gH = H - pad.t - pad.b;
+  const th = calcThermo(state);
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1;
+  for (let i=0;i<=10;i++) {
+    const x = pad.l + i/10*gW;
+    ctx.beginPath(); ctx.moveTo(x, pad.t); ctx.lineTo(x, pad.t+gH); ctx.stroke();
+  }
+
+  // Define pipeline segments + events
+  const pMin = state.p1 * 0.55;  // min pressure before station
+  const pMax = th.p2 + 5;
+
+  // X positions (proportional along pipeline)
+  const segs = [
+    { label: 'Previous\nStation',  x: 0.0,  p: th.p2 },
+    { label: 'Pipeline loss',      x: 0.45, p: null   },
+    { label: 'Inlet\nScrubber',    x: 0.48, p: state.p1 * 1.01, event: 'scrubber' },
+    { label: 'Compressor',         x: 0.52, p: state.p1, event: 'comp-in' },
+    { label: null,                 x: 0.56, p: th.p2,   event: 'comp-out' },
+    { label: 'After-\ncooler',     x: 0.60, p: th.p2 * 0.995 },
+    { label: null,                 x: 0.65, p: th.p2 * 0.991 },
+    { label: 'Next\nStation →',    x: 1.0,  p: th.p2 * 0.62 },
+  ];
+
+  // Interpolate full pressure curve
+  const points = [];
+  for (let i = 0; i < segs.length - 1; i++) {
+    const s1 = segs[i], s2 = segs[i+1];
+    const steps = 40;
+    for (let j = 0; j < steps; j++) {
+      const t2 = j / steps;
+      const x = s1.x + t2 * (s2.x - s1.x);
+      // Slight curve on compression jump
+      const p = (s1.event === 'comp-out' || s2.event === 'comp-out')
+        ? s1.p + (s2.p - s1.p) * (1 - Math.pow(1-t2, 2))
+        : s1.p + (s2.p - s1.p) * t2;
+      points.push({ x, p });
+    }
+  }
+  points.push(segs[segs.length-1]);
+
+  // Axes
+  ctx.strokeStyle = '#4a5568'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, pad.t+gH); ctx.lineTo(pad.l+gW, pad.t+gH); ctx.stroke();
+
+  // Map p → y
+  const pRange = pMax - pMin * 0.9;
+  const py = p => pad.t + gH * (1 - (p - pMin*0.9) / pRange);
+  const px = x => pad.l + x * gW;
+
+  // Shade beneath curve (pressure area)
+  ctx.beginPath();
+  ctx.moveTo(px(points[0].x), pad.t + gH);
+  points.forEach(pt => ctx.lineTo(px(pt.x), py(pt.p)));
+  ctx.lineTo(px(points[points.length-1].x), pad.t + gH);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(59,130,246,0.07)'; ctx.fill();
+
+  // Pressure curve
+  ctx.strokeStyle = '#58a6ff'; ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  points.forEach((pt, i) => i === 0 ? ctx.moveTo(px(pt.x), py(pt.p)) : ctx.lineTo(px(pt.x), py(pt.p)));
+  ctx.stroke();
+
+  // Compression jump highlight
+  const compInX = px(0.52), compOutX = px(0.56);
+  const compInY = py(state.p1), compOutY = py(th.p2);
+  ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(compInX, compInY); ctx.lineTo(compOutX, compOutY); ctx.stroke();
+
+  // Station boundary
+  ctx.strokeStyle = 'rgba(192,57,43,0.3)'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(px(0.45), pad.t); ctx.lineTo(px(0.45), pad.t+gH); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(px(0.67), pad.t); ctx.lineTo(px(0.67), pad.t+gH); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(192,57,43,0.15)';
+  ctx.fillRect(px(0.45), pad.t, px(0.67)-px(0.45), gH);
+  ctx.fillStyle = '#c0392b'; ctx.font = `bold ${W*0.013}px DM Sans,sans-serif`; ctx.textAlign='center';
+  ctx.fillText('COMPRESSOR STATION', (px(0.45)+px(0.67))/2, pad.t + H*0.05);
+
+  // Y-axis pressure labels
+  ctx.fillStyle = '#8b949e'; ctx.font = `${W*0.012}px DM Mono,monospace`; ctx.textAlign='right';
+  [state.p1, th.p2, (state.p1+th.p2)/2].forEach(pVal => {
+    const y = py(pVal);
+    ctx.fillText(`${pVal.toFixed(0)} bar`, pad.l - 6, y + 4);
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l+gW, y); ctx.stroke();
+  });
+
+  // Segment labels
+  [{ x:0.0, label:'Source\nterminal'}, {x:0.52, label:'Compressor'}, {x:1.0, label:'Delivery\npoint'}].forEach(seg => {
+    ctx.fillStyle = '#8b949e'; ctx.font = `${W*0.011}px DM Sans,sans-serif`; ctx.textAlign='center';
+    seg.label.split('\n').forEach((line, li) => {
+      ctx.fillText(line, px(seg.x), pad.t+gH + H*0.06 + li*H*0.04);
+    });
+  });
+
+  // Axis labels
+  ctx.fillStyle = '#8b949e'; ctx.font = `${W*0.013}px DM Mono,monospace`; ctx.textAlign='center';
+  ctx.fillText('Distance along pipeline →', pad.l + gW/2, H - H*0.03);
+  ctx.save(); ctx.translate(W*0.025, pad.t + gH/2); ctx.rotate(-Math.PI/2);
+  ctx.fillText('Pressure (bar)', 0, 0); ctx.restore();
+
+  // Title
+  ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.font = `bold ${W*0.018}px DM Sans,sans-serif`; ctx.textAlign='center';
+  ctx.fillText('Pipeline Pressure Profile — NTS Transmission Segment', W/2, pad.t*0.5);
+  ctx.fillStyle = '#8b949e'; ctx.font = `${W*0.012}px DM Mono,monospace`;
+  ctx.fillText(`P₁=${state.p1} bar → P₂=${th.p2.toFixed(1)} bar · CR=${state.cr.toFixed(2)} · ΔT=+${th.deltaT.toFixed(1)} °C · Power=${th.pMW.toFixed(1)} MW`, W/2, pad.t*0.78);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  UTILITIES
+// ═══════════════════════════════════════════════════════════════════
+function drawArrow(ctx, x1, y1, x2, y2, color, lw) {
+  const angle = Math.atan2(y2-y1, x2-x1);
+  const len   = Math.hypot(x2-x1, y2-y1);
+  ctx.save();
+  ctx.translate(x1, y1); ctx.rotate(angle);
+  ctx.strokeStyle = color; ctx.lineWidth = lw;
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(len-8, 0); ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.moveTo(len, 0); ctx.lineTo(len-10, -5); ctx.lineTo(len-10, 5); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+function wrapText(text, maxW, ctx) {
+  const words = text.split(' ');
+  const lines = []; let cur = '';
+  words.forEach(w => {
+    const test = cur ? cur + ' ' + w : w;
+    if (ctx.measureText(test).width > maxW && cur) { lines.push(cur); cur = w; }
+    else cur = test;
+  });
+  if (cur) lines.push(cur);
+  return lines;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  HOVER & CLICK
+// ═══════════════════════════════════════════════════════════════════
+let hoveredComp = null;
+
+function getCompAt(mx, my) {
+  const W = canvas.width, H = canvas.height;
+  const comps = getComponents(W, H);
+  return comps.find(c => mx >= c.x && mx <= c.x+c.w && my >= c.y && my <= c.y+c.h) || null;
+}
+
+canvas.addEventListener('mousemove', e => {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width  / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const mx = (e.clientX - rect.left) * scaleX;
+  const my = (e.clientY - rect.top)  * scaleY;
+
+  if (mode !== 'station') { hoveredComp = null; return; }
+
+  const comp = getCompAt(mx, my);
+  hoveredComp = comp;
+
+  const tt = document.getElementById('tooltip');
+  if (comp) {
+    document.getElementById('tt-title').textContent = comp.label;
+    document.getElementById('tt-body').textContent  = comp.short;
+    const canvasRect = canvas.getBoundingClientRect();
+    tt.style.left    = `${e.clientX - canvasRect.left + 12}px`;
+    tt.style.top     = `${e.clientY - canvasRect.top  + 12}px`;
+    tt.style.opacity = '1';
+    canvas.style.cursor = 'pointer';
+  } else {
+    tt.style.opacity = '0';
+    canvas.style.cursor = 'crosshair';
+  }
+});
+
+canvas.addEventListener('mouseleave', () => {
+  document.getElementById('tooltip').style.opacity = '0';
+  hoveredComp = null;
+});
+
+canvas.addEventListener('click', e => {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const mx = (e.clientX - rect.left) * scaleX;
+  const my = (e.clientY - rect.top)  * scaleY;
+
+  if (mode !== 'station') return;
+  const comp = getCompAt(mx, my);
+  selectedComp = comp && comp.id !== selectedComp?.id ? comp : null;
+
+  document.getElementById('sel-title').textContent = selectedComp ? selectedComp.label : 'Click a component';
+  document.getElementById('sel-body').textContent  = selectedComp ? selectedComp.detail : 'Hover over any part of the compressor station diagram to see its name, then click for a full engineering explanation.';
+});
+
+// ═══════════════════════════════════════════════════════════════════
+//  CONTROLS
+// ═══════════════════════════════════════════════════════════════════
+function updateControls() {
+  state.p1 = parseFloat(document.getElementById('ctrl-p1').value);
+  state.cr = parseFloat(document.getElementById('ctrl-cr').value);
+  state.t1 = parseFloat(document.getElementById('ctrl-t1').value);
+  state.mf = parseFloat(document.getElementById('ctrl-mf').value);
+
+  document.getElementById('cv-p1').textContent = state.p1 + ' bar';
+  document.getElementById('cv-cr').textContent = state.cr.toFixed(2);
+  document.getElementById('cv-t1').textContent = state.t1 + ' °C';
+  document.getElementById('cv-mf').textContent = state.mf + ' kg/s';
+
+  updateReadouts();
+}
+
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('.mode-tab').forEach((btn, i) => {
+    btn.classList.toggle('active', ['station','pv','pressure'][i] === m);
+  });
+}
+
+function togglePlay() {
+  playing = !playing;
+  document.getElementById('play-btn').textContent = playing ? '⏸ Pause' : '▶ Play';
+  if (playing) loop();
+}
+
+document.getElementById('speed-slider').addEventListener('input', e => {
+  speedMult = parseFloat(e.target.value);
+  document.getElementById('speed-label').textContent = speedMult.toFixed(1) + '×';
+});
+
+// ═══════════════════════════════════════════════════════════════════
+//  RESIZE & LOOP
+// ═══════════════════════════════════════════════════════════════════
+function resize() {
+  const wrap = canvas.parentElement;
+  canvas.width  = wrap.clientWidth  * devicePixelRatio;
+  canvas.height = wrap.clientHeight * devicePixelRatio;
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  canvas.style.width  = wrap.clientWidth  + 'px';
+  canvas.style.height = wrap.clientHeight + 'px';
+}
+
+function loop() {
+  if (!playing) return;
+  animFrame++;
+  if      (mode === 'station')  drawStation();
+  else if (mode === 'pv')       drawPV();
+  else if (mode === 'pressure') drawPressureProfile();
+  updateReadouts();
+  requestAnimationFrame(loop);
+}
+
+window.addEventListener('resize', () => { resize(); });
+resize();
+updateControls();
+updateReadouts();
+loop();
+</script>
+</body>
+</html>

@@ -2,10 +2,6 @@
 
 An educational website about gas compressors on the UK's National Transmission System (NTS), operated by National Gas Transmission plc. Covers the physics, engineering design, and real infrastructure behind the machines that move Britain's gas.
 
-## Live demo
-
-Open `index.html` in any modern browser — no build step or server required.
-
 ---
 
 ## What's in this site
@@ -72,16 +68,6 @@ Total shaft power:   P  = W × ṁ  [watts]
 
 ---
 
-## How to put this on GitHub Pages
-
-1. Create a new repository on github.com
-2. Upload all files, keeping the folder structure intact
-3. Go to **Settings → Pages → Branch: main → / (root)**
-4. Your site will be live at `https://yourusername.github.io/nts-compressors/`
-
-The visual (`assets/compressor-visual.html`) will be accessible at `.../assets/compressor-visual.html`.
-
----
 
 ## Sources
 
